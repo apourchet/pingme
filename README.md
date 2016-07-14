@@ -7,8 +7,6 @@ Finally a notification service with a simple API, accessible from command line.
     go install github.com/apourchet/pingme/cmd/pingme
 
 ### Systemd Setup
-First execute:
-
     pingmesrv -systemd
     systemctl enable $HOME/.config/systemd/user/pingmesrv.service
     systemctl daemon-reload
