@@ -10,7 +10,9 @@ Finally a notification service with a simple API, accessible from command line.
 First execute:
 
     pingmesrv -systemd
-Then follow the instructions displayed. 
+    systemctl enable $HOME/.config/systemd/user/pingmesrv.service
+    systemctl daemon-reload
+    systemctl start pingmesrv.service
 
 ### Quickstart
 In one terminal window, you listen for a notification:
