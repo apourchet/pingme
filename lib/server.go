@@ -1,6 +1,7 @@
 package ping
 
 import (
+	b64 "encoding/base64"
 	"fmt"
 	"log"
 	"net/http"
@@ -62,6 +63,7 @@ func (ps *Server) listen(rw http.ResponseWriter, req *http.Request) {
 				fmt.Fprintf(rw, `{"success":0}`)
 				return
 			}
+			msg = b64.StdEncoding.EncodeToString([]byte(msg))
 			fmt.Fprintf(rw, "data: %s\n\n", msg)
 			f.Flush()
 		}
