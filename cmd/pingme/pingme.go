@@ -28,6 +28,7 @@ var (
 )
 
 func listen(id string) {
+	config.SetLast(id)
 	c := &pingme.Client{config.Host, config.Port}
 
 	out := func(msg string) bool {

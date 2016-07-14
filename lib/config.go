@@ -20,6 +20,8 @@ const (
 
 	DEFAULT_HOST = "localhost"
 	DEFAULT_PORT = "1025"
+
+	LAST_ALIAS = "last"
 )
 
 func GetClientConfig() ClientConfig {
@@ -45,6 +47,11 @@ func GetClientConfig() ClientConfig {
 		return conf
 	}
 	return conf
+}
+
+func (conf *ClientConfig) SetLast(id string) error {
+	conf.Aliases[LAST_ALIAS] = id
+	return conf.WriteOut()
 }
 
 func (conf *ClientConfig) WriteOut() error {
