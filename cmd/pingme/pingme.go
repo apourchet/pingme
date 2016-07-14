@@ -16,12 +16,13 @@ const (
 )
 
 var (
-	aliasFlag = flag.Bool("alias", false,
-		"pingme -alias <alias> <id>\n\tCreates an alias for this channel id.")
-	rand_flag   = flag.Bool("r", false, "Creates a random channel and waits for it to be pinged.")
-	listen_flag = flag.Bool("l", false,
-		"pingme -l <id/alias>\n\tListens to a given channel.")
+	hostFlag  = flag.String("h", "", "pingme -h <host:port>")
+	aliasFlag = flag.Bool("a", false, "pingme -a <alias> <id>\n\tCreates an alias for this channel id.")
+
+	rand_flag  = flag.Bool("r", false, "Creates a random channel and waits for it to be pinged.")
+	listenFlag = flag.String("l", "", "pingme -l <id/alias>\n\tListens to a given channel.")
 	numberFlag = flag.Int("n", -1, "pingme -l -n=<num> <id/alias>\n\tNumber of messages to wait for.")
+	pingFlag   = flag.Bool("p", false, "pingme -p <id/alias> <message>")
 
 	config pingme.ClientConfig
 )
@@ -95,8 +96,7 @@ func aliasAction() {
 }
 
 func listenAction() {
-	checkArgLength(1)
-	id := resolveAlias(flag.Args()[0])
+	id := resolveAlias(*listenFlag)
 	listen(id)
 }
 
@@ -121,6 +121,22 @@ func pingAction() {
 	}
 }
 
+func parseHostFlag() {
+	hostSplit := strings.Split(*hostFlag, ":")
+	if len(hostSplit) != 2 {
+		fmt.Println("ERROR: Malformed host")
+		os.Exit(1)
+	}
+	config.Host = hostSplit[0]
+	config.Port = hostSplit[1]
+	if err := config.WriteOut(); err != nil {
+		fmt.Println("ERROR: Could not overwrite configuration file.")
+		os.Exit(1)
+	} else {
+		fmt.Println("Successfully updated configuration file.")
+	}
+}
+
 func init() {
 	flag.Parse()
 }
@@ -128,13 +144,19 @@ func init() {
 func main() {
 	config = pingme.GetClientConfig()
 
+	if len(*hostFlag) != 0 {
+		parseHostFlag()
+	}
+
 	if *aliasFlag {
 		aliasAction()
 	} else if *rand_flag {
 		randAction()
-	} else if *listen_flag {
+	} else if len(*listenFlag) != 0 {
 		listenAction()
-	} else {
+	} else if *pingFlag {
 		pingAction()
+	} else {
+		flag.PrintDefaults()
 	}
 }
