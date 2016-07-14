@@ -16,6 +16,8 @@ const (
 )
 
 var (
+	helpFlag = flag.Bool("help", false, "Displays this menu.")
+
 	hostFlag  = flag.String("h", "", "pingme -h <host:port>")
 	aliasFlag = flag.Bool("a", false, "pingme -a <alias> <id>\n\tCreates an alias for this channel id.")
 
@@ -144,6 +146,11 @@ func init() {
 
 func main() {
 	config = pingme.GetClientConfig()
+
+	if *helpFlag {
+		flag.PrintDefaults()
+		return
+	}
 
 	if len(*hostFlag) != 0 {
 		parseHostFlag()
