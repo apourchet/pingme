@@ -51,7 +51,7 @@ func (c *Client) Listen(id string, out func(string) bool) error {
 		if len(msg) == 0 {
 			continue
 		}
-		msgBytes, err := b64.StdEncoding.DecodeString(msg)
+		msgBytes, err := b64.URLEncoding.DecodeString(msg)
 		if err != nil {
 			continue
 		}
