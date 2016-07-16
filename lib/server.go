@@ -1,7 +1,6 @@
 package ping
 
 import (
-	b64 "encoding/base64"
 	"fmt"
 	"log"
 	"net/http"
@@ -11,6 +10,7 @@ type Server struct {
 	Port      string
 	OnPing    func(id string, msg string) (idout string, msgout string, err error)
 	OnMessage func(id, msg string) (msgout string, err error)
+	ChannelManager
 }
 
 var (
@@ -30,14 +30,16 @@ func (ps *Server) Serve() error {
 }
 
 func NewServer(port string) *Server {
-	return &Server{port, DEFAULT_ONPING, DEFAULT_ONMESSAGE}
+	return &Server{port, DEFAULT_ONPING, DEFAULT_ONMESSAGE, NewChannelManager()}
 }
 
 func (ps *Server) listen(rw http.ResponseWriter, req *http.Request) {
 	f, cn := checkStreamable(rw)
 	if cn == nil {
+		fmt.Fprintf(rw, `{"success":0}`)
 		return
 	}
+
 	setHeaders(rw)
 
 	id, ok := parseListen(req)
@@ -46,16 +48,15 @@ func (ps *Server) listen(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if _, ok = channels[id]; !ok {
-		channels[id] = make([]chan string, 0)
-	}
+	ps.CreateChannel(id)
 
 	for {
 		c := make(chan string)
-		channels[id] = append(channels[id], c)
+		ps.AddListener(id, c)
 		select {
 		case <-cn.CloseNotify():
 			log.Println("done: closed connection")
+			fmt.Fprintf(rw, `{"success":0}`)
 			return
 		case msg := <-c:
 			msg, err := ps.OnMessage(id, msg)
@@ -63,8 +64,7 @@ func (ps *Server) listen(rw http.ResponseWriter, req *http.Request) {
 				fmt.Fprintf(rw, `{"success":0}`)
 				return
 			}
-			msg = b64.URLEncoding.EncodeToString([]byte(msg))
-			fmt.Fprintf(rw, "data: %s\n\n", msg)
+			ps.WriteData(rw, msg)
 			f.Flush()
 		}
 	}
@@ -83,18 +83,11 @@ func (ps *Server) ping(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if c, ok := channels[id]; ok {
-		outs := make([]chan string, len(c))
-		copy(outs, c)
-		channels[id] = make([]chan string, 0)
-		for _, out := range outs {
-			select {
-			case out <- msg:
-			default:
-			}
-		}
+	if ps.PingChannel(id, msg) != 0 {
+		fmt.Fprintf(rw, `{"success":1}`)
+	} else {
+		fmt.Fprintf(rw, `{"success":0}`)
 	}
-	fmt.Fprintf(rw, `{"success":1}`)
 }
 
 func checkStreamable(rw http.ResponseWriter) (http.Flusher, http.CloseNotifier) {
