@@ -12,9 +12,6 @@ RUN apt-get update
 RUN apt-get install sudo
 RUN sudo apt-get install -y man git curl python
 RUN sudo apt-get install -y golang
-RUN sudo apt-get install -y make
-RUN sudo apt-get install -y jq
-RUN sudo apt-get install -y screen
 
 # Specifics
 VOLUME /pingme
